@@ -134,7 +134,7 @@ class TestPet:
         with allure.step("Получение id созданного питомца"):
             pet_id = create_pet["id"]
 
-        with allure.step("Отправка запроса на обновление данных питомца"):
+        with allure.step("Подготовка данных для обновления"):
             payload = {"id": pet_id,
                        "name": "Buddy Updated",
                        "status": "sold"}
@@ -143,7 +143,10 @@ class TestPet:
             response = requests.put(f"{BASE_URL}/pet/", json=payload)
             response_json = response.json()
 
-            assert response.status_code == 200
+        with allure.step("Проверка статус кода после обновления"):
+            assert response.status_code == 200, "Код не совпал с ожидаемым"
+
+        with allure.step("Проверка обновленных данных"):
             assert response_json["id"] == payload["id"]
             assert response_json["name"] == payload["name"]
             assert response_json["status"] == payload["status"]
