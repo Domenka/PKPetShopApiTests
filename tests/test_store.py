@@ -15,7 +15,7 @@ class TestStore:
         with allure.step("Проверка статуса кода 404"):
            assert response.status_code == 404, "Код не совпал с ожидаемым"
 
-        with allure.step("Проверка статуса кода 404"):
+        with allure.step("Проверка текста ошибки"):
            assert response.text == "Order not found", "Текст не совпал с ожидаемым"
 
 
