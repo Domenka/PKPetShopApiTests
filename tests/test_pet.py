@@ -2,6 +2,7 @@ import requests
 import allure
 from .schemas.pet_schema import PET_SCHEMA
 import jsonschema
+import pytest
 
 BASE_URL = "http://5.181.109.28:9090/api/v3"
 
@@ -150,3 +151,29 @@ class TestPet:
             assert response_json["id"] == payload["id"]
             assert response_json["name"] == payload["name"]
             assert response_json["status"] == payload["status"]
+
+
+    @allure.title("Получение списка питомцев по статусу")
+    @pytest.mark.parametrize (
+        "status, excpected_status_code",
+        [
+            ("available", 200),
+            ("pending", 200),
+            ("sold", 200),
+            (None, 400),
+            ("reserved", 400)
+
+        ]
+    )
+    def test_get_pet_list_by_status(self, status, excpected_status_code):
+        with allure.step(f"Отправка запроса на получение данных питомца по статусу {status}"):
+            response = requests.get(f"{BASE_URL}/pet/findByStatus", params={"status": status})
+
+        with allure.step("Проверка статуса и формата данных"):
+            assert response.status_code == excpected_status_code
+
+            if response.status_code == 200:
+                #если отправляем с none-параметром, то в ответе будет не лист.
+                # Условие на статус код - чтобы тест не падал
+             with allure.step("Проверка формата данных"):
+              assert isinstance(response.json(), list)
