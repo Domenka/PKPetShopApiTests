@@ -10,7 +10,6 @@ BASE_URL = "http://5.181.109.28:9090/api/v3"
 @allure.feature("Pet")
 class TestPet:
 
-
     @allure.title("Попытка удаления несуществующего питомца")
     def test_delete_pet_which_not_exists(self):
         with allure.step("Отправка запроса на удаление несуществующего питомца"):
@@ -116,18 +115,18 @@ class TestPet:
 
     @allure.title("Удаление питомца по ID")
     def test_delete_pet_by_id(self, create_pet):
-       with allure.step("Получение id созданного питомца"):
-        pet_id = create_pet["id"]
+        with allure.step("Получение id созданного питомца"):
+            pet_id = create_pet["id"]
 
-        with allure.step("Отправка запроса на удаление питомца по id"):
-            response = requests.delete(url=f"{BASE_URL}/pet/{pet_id}")
-        with allure.step("Проверка статуса ответа"):
-            assert response.status_code == 200, "Код не совпал с ожидаемым"
+            with allure.step("Отправка запроса на удаление питомца по id"):
+                response = requests.delete(url=f"{BASE_URL}/pet/{pet_id}")
+            with allure.step("Проверка статуса ответа"):
+                assert response.status_code == 200, "Код не совпал с ожидаемым"
 
-        with allure.step("Отправка запроса на получение данных питомца по id"):
-            response2 = requests.get(f"{BASE_URL}/pet/{pet_id}")
-        with allure.step("Проверка статуса ответа"):
-            assert response2.status_code == 404, "Код не совпал с ожидаемым"
+            with allure.step("Отправка запроса на получение данных питомца по id"):
+                response2 = requests.get(f"{BASE_URL}/pet/{pet_id}")
+            with allure.step("Проверка статуса ответа"):
+                assert response2.status_code == 404, "Код не совпал с ожидаемым"
 
 
     @allure.title("Обновление информации о питомце")
@@ -153,27 +152,56 @@ class TestPet:
             assert response_json["status"] == payload["status"]
 
 
-    @allure.title("Получение списка питомцев по статусу")
-    @pytest.mark.parametrize (
+    @allure.title("Получение списка питомцев по существующему статусу")
+    @pytest.mark.parametrize(
         "status, excpected_status_code",
         [
             ("available", 200),
             ("pending", 200),
-            ("sold", 200),
-            (None, 400),
-            ("reserved", 400)
+            ("sold", 200)
 
         ]
+
     )
-    def test_get_pet_list_by_status(self, status, excpected_status_code):
+    def test_get_pet_list_by_exist_status(self, status, excpected_status_code):
         with allure.step(f"Отправка запроса на получение данных питомца по статусу {status}"):
             response = requests.get(f"{BASE_URL}/pet/findByStatus", params={"status": status})
 
         with allure.step("Проверка статуса и формата данных"):
             assert response.status_code == excpected_status_code
+        with allure.step("Проверка формата данных"):
+            assert isinstance(response.json(), list)
 
-            if response.status_code == 200:
-                #если отправляем с none-параметром, то в ответе будет не лист.
-                # Условие на статус код - чтобы тест не падал
-             with allure.step("Проверка формата данных"):
-              assert isinstance(response.json(), list)
+
+    @allure.title("Получение списка питомцев по несуществующему статусу")
+    @pytest.mark.parametrize(
+        "status, excpected_status_code",
+        [
+            ("reserved", 400)
+        ]
+    )
+    def test_get_pet_list_by_not_exist_status(self, status, excpected_status_code):
+        with allure.step(f"Отправка запроса на получение данных питомца по статусу {status}"):
+            response = requests.get(f"{BASE_URL}/pet/findByStatus", params={"status": status})
+
+        with allure.step("Проверка статус кода"):
+            assert response.status_code == excpected_status_code
+        with allure.step("Проверка текста ошибки"): #мне кажется в данном кейсе достаточно проверить текст ошибки в ответе
+            assert response.text == '{"code":400,"message":"Input error: query parameter `status value `reserved` is not in the allowable values `[available, pending, sold]`"}'
+
+
+    @allure.title("Получение списка питомцев по пустому статусу")
+    @pytest.mark.parametrize(
+        "status, excpected_status_code",
+        [
+            (None, 400)
+        ]
+    )
+    def test_get_pet_list_by_empty_status(self, status, excpected_status_code):
+        with allure.step(f"Отправка запроса на получение данных питомца по статусу {status}"):
+            response = requests.get(f"{BASE_URL}/pet/findByStatus", params={"status": status})
+
+        with allure.step("Проверка статус кода"):
+            assert response.status_code == excpected_status_code
+        with allure.step("Проверка текста ошибки"): #мне кажется в данном кейсе достаточно проверить текст ошибки в ответе
+            assert response.text == 'No status provided. Try again?'
